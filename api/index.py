@@ -18,19 +18,20 @@ static_dir = os.path.join(parent_dir, 'static')
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
-# Always use /tmp directory for SQLite database in serverless environments to avoid read-only permission errors
+# Always use /tmp directory for SQLite database in serverless environments
 db_path = os.path.join(tempfile.gettempdir(), 'students.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-# Safely initialize database tables without crashing
-try:
-    with app.app_context():
+# Ensure database tables exist before handling any HTTP request
+@app.before_request
+def init_db_tables():
+    try:
         db.create_all()
-except Exception as err:
-    print("DB init warning:", err)
+    except Exception as err:
+        print("Table initialization info:", err)
 
 # Helper list of lab subjects
 LAB_SUBJECTS = ['Python Lab', 'DBMS Lab', 'Operating System Lab', 'Computer Network Lab']
@@ -38,18 +39,28 @@ LAB_SUBJECTS = ['Python Lab', 'DBMS Lab', 'Operating System Lab', 'Computer Netw
 @app.route('/')
 @app.route('/dashboard')
 def dashboard():
-    total_students = Student.query.count()
-    today_str = date.today().strftime('%Y-%m-%d')
-    
-    present_today = Attendance.query.filter_by(date=today_str, status='Present').count()
-    absent_today = Attendance.query.filter_by(date=today_str, status='Absent').count()
-    
-    all_fees = Fees.query.all()
-    fees_pending = sum(f.pending_amount for f in all_fees)
-    
-    all_marks = Marks.query.all()
-    students_passed = sum(1 for m in all_marks if m.status == 'Pass')
-    students_failed = sum(1 for m in all_marks if m.status == 'Fail')
+    try:
+        total_students = Student.query.count()
+        today_str = date.today().strftime('%Y-%m-%d')
+        
+        present_today = Attendance.query.filter_by(date=today_str, status='Present').count()
+        absent_today = Attendance.query.filter_by(date=today_str, status='Absent').count()
+        
+        all_fees = Fees.query.all()
+        fees_pending = sum(f.pending_amount for f in all_fees) if all_fees else 0.0
+        
+        all_marks = Marks.query.all()
+        students_passed = sum(1 for m in all_marks if m.status == 'Pass') if all_marks else 0
+        students_failed = sum(1 for m in all_marks if m.status == 'Fail') if all_marks else 0
+    except Exception as err:
+        print("Dashboard query error:", err)
+        total_students = 0
+        today_str = date.today().strftime('%Y-%m-%d')
+        present_today = 0
+        absent_today = 0
+        fees_pending = 0.0
+        students_passed = 0
+        students_failed = 0
     
     return render_template('dashboard.html',
                            total_students=total_students,
@@ -63,13 +74,16 @@ def dashboard():
 @app.route('/students')
 def student_list():
     query = request.args.get('q', '').strip()
-    if query:
-        students = Student.query.filter(
-            (Student.name.ilike(f'%{query}%')) | 
-            (Student.roll_no.ilike(f'%{query}%'))
-        ).all()
-    else:
-        students = Student.query.all()
+    try:
+        if query:
+            students = Student.query.filter(
+                (Student.name.ilike(f'%{query}%')) | 
+                (Student.roll_no.ilike(f'%{query}%'))
+            ).all()
+        else:
+            students = Student.query.all()
+    except Exception:
+        students = []
     return render_template('students.html', students=students, query=query)
 
 @app.route('/students/add', methods=['GET', 'POST'])
