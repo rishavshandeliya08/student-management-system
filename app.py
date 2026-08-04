@@ -4,11 +4,16 @@ from datetime import date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from models import db, Student, Attendance, LabAttendance, Marks, Fees
 
-app = Flask(__name__)
+# Define absolute base directory so Vercel serverless function finds templates and static files
+base_dir = os.path.abspath(os.path.dirname(__file__))
+template_dir = os.path.join(base_dir, 'templates')
+static_dir = os.path.join(base_dir, 'static')
+
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
 # Use writable temporary directory on Vercel serverless environment
-if os.environ.get('VERCEL'):
+if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
     db_path = os.path.join(tempfile.gettempdir(), 'students.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 else:
