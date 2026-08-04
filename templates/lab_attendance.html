@@ -6,44 +6,46 @@
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
         <h3 class="fw-bold mb-1"><i class="bi bi-cpu text-primary me-2"></i>Laboratory Attendance</h3>
-        <p class="text-muted mb-0">Track practical lab attendance across Python, DBMS, OS, and Computer Network labs</p>
+        <p class="text-muted mb-0">Track practical lab attendance for Python, DBMS, OS, and Computer Network labs</p>
     </div>
 </div>
 
-<!-- Subject Selector & Daily Marking -->
+<!-- Subject Filter Tabs -->
+<ul class="nav nav-pills mb-4 gap-2">
+    {% for sub in subjects %}
+    <li class="nav-item">
+        <a class="nav-link {% if sub == selected_subject %}active fw-bold{% else %}bg-white border text-dark{% endif %}" href="/lab-attendance?subject={{ sub }}&date={{ selected_date }}">
+            <i class="bi bi-code-slash me-1"></i>{{ sub }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-    <form method="POST" action="{{ url_for('lab_attendance') }}">
-        <div class="row g-3 align-items-center mb-4 pb-3 border-bottom">
-            <div class="col-md-5">
-                <label class="form-label fw-semibold text-muted small uppercase mb-1">Select Lab Subject:</label>
-                <select name="subject" class="form-select fw-bold border-primary" onchange="window.location.href='{{ url_for('lab_attendance') }}?subject=' + encodeURIComponent(this.value) + '&date={{ selected_date }}';">
-                    {% for sub in subjects %}
-                        <option value="{{ sub }}" {% if sub == selected_subject %}selected{% endif %}>{{ sub }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold text-muted small uppercase mb-1">Lab Session Date:</label>
-                <input type="date" name="date" value="{{ selected_date }}" class="form-control" onchange="window.location.href='{{ url_for('lab_attendance') }}?subject=' + encodeURIComponent('{{ selected_subject }}') + '&date=' + this.value;">
-            </div>
-            <div class="col-md-3 text-md-end mt-md-4">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">
-                    <i class="bi bi-check2-circle me-1"></i> Save {{ selected_subject }} Log
-                </button>
+    <form method="POST" action="/lab-attendance">
+        <input type="hidden" name="subject" value="{{ selected_subject }}">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 pb-3 border-bottom gap-3">
+            <h5 class="fw-bold mb-0 text-dark">
+                <span class="badge bg-primary me-2">{{ selected_subject }}</span> Practical Attendance
+            </h5>
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0 fw-semibold text-nowrap">Lab Date:</label>
+                <input type="date" name="date" value="{{ selected_date }}" class="form-control form-control-sm" onchange="window.location.href='/lab-attendance?subject={{ selected_subject }}&date=' + this.value;">
             </div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive mb-3">
             <table class="table table-custom align-middle">
                 <thead>
                     <tr>
                         <th>Roll No</th>
-                        <th>Student Name</th>
-                        <th>Status for {{ selected_subject }}</th>
-                        <th class="text-center">Python Lab (P/T)</th>
-                        <th class="text-center">DBMS Lab (P/T)</th>
-                        <th class="text-center">OS Lab (P/T)</th>
-                        <th class="text-center">CN Lab (P/T)</th>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Today's Status</th>
+                        <th>Python Lab</th>
+                        <th>DBMS Lab</th>
+                        <th>OS Lab</th>
+                        <th>Network Lab</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,6 +54,7 @@
                         <tr>
                             <td><span class="badge bg-primary-subtle text-primary fw-bold">{{ r.student.roll_no }}</span></td>
                             <td class="fw-bold">{{ r.student.name }}</td>
+                            <td><small class="text-muted">{{ r.student.course }}</small></td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <input type="radio" class="btn-check" name="status_{{ r.student.id }}" id="lab_present_{{ r.student.id }}" value="Present" {% if r.today_status == 'Present' %}checked{% endif %}>
@@ -61,24 +64,29 @@
                                     <label class="btn btn-outline-danger" for="lab_absent_{{ r.student.id }}">Absent</label>
                                 </div>
                             </td>
-                            <!-- Per Lab Stats Breakdown -->
                             {% for sub in subjects %}
-                                {% set stat = r.subject_stats[sub] %}
-                                <td class="text-center">
-                                    <span class="fw-bold text-success">{{ stat.present }}</span> / 
-                                    <span class="text-muted">{{ stat.total }}</span>
+                                <td>
+                                    <span class="fw-semibold">{{ r.subject_stats[sub]['present'] }}</span>/{{ r.subject_stats[sub]['total'] }}
                                 </td>
                             {% endfor %}
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">No students available. Add students to track lab attendance.</td>
+                            <td colspan="8" class="text-center py-4 text-muted">No students registered to mark lab attendance.</td>
                         </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
+
+        {% if records %}
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary px-4 fw-bold">
+                <i class="bi bi-save me-1"></i> Save {{ selected_subject }} Attendance
+            </button>
+        </div>
+        {% endif %}
     </form>
 </div>
 {% endblock %}

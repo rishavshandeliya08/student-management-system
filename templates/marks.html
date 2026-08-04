@@ -5,93 +5,98 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
-        <h3 class="fw-bold mb-1"><i class="bi bi-journal-bookmark text-primary me-2"></i>Academic Marks & Result Analysis</h3>
-        <p class="text-muted mb-0">Record CT-1, CT-2, and Semester Exam marks with automatic Pass/Fail calculations</p>
+        <h3 class="fw-bold mb-1"><i class="bi bi-journal-bookmark text-primary me-2"></i>Marks & Performance Evaluation</h3>
+        <p class="text-muted mb-0">Track CT-1, CT-2, Semester exam marks and automated pass/fail results</p>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-    <div class="table-responsive">
-        <table class="table table-custom align-middle">
-            <thead>
+<div class="table-responsive">
+    <table class="table table-custom align-middle">
+        <thead>
+            <tr>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Course</th>
+                <th>CT-1 (25)</th>
+                <th>CT-2 (25)</th>
+                <th>Sem Exam (100)</th>
+                <th>Total Marks (150)</th>
+                <th>Percentage</th>
+                <th>Result Status</th>
+                <th class="text-end">Update Marks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if students %}
+                {% for s in students %}
+                {% set mark = s.marks[0] if s.marks else None %}
+                {% set total = mark.total_marks if mark else 0 %}
+                {% set pct = mark.percentage if mark else 0.0 %}
+                {% set status = mark.status if mark else 'N/A' %}
                 <tr>
-                    <th>Roll No</th>
-                    <th>Student Name</th>
-                    <th>CT-1 (Max 25)</th>
-                    <th>CT-2 (Max 25)</th>
-                    <th>Sem Exam (Max 100)</th>
-                    <th>Total Marks</th>
-                    <th>Percentage</th>
-                    <th>Result Status</th>
-                    <th class="text-end">Update Marks</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if students %}
-                    {% for student in students %}
-                    {% set m = student.marks %}
-                    <tr>
-                        <td><span class="badge bg-primary-subtle text-primary fw-bold">{{ student.roll_no }}</span></td>
-                        <td class="fw-bold">{{ student.name }}</td>
-                        <td>{{ m.ct1 if m else 0 }}</td>
-                        <td>{{ m.ct2 if m else 0 }}</td>
-                        <td>{{ m.sem_exam if m else 0 }}</td>
-                        <td class="fw-bold text-dark">{{ m.total_marks if m else 0 }} / 150</td>
-                        <td class="fw-bold">{{ m.percentage if m else 0 }}%</td>
-                        <td>
-                            {% if m and m.status == 'Pass' %}
-                                <span class="badge bg-success-subtle text-success badge-status"><i class="bi bi-check-circle-fill me-1"></i>Pass</span>
-                            {% else %}
-                                <span class="badge bg-danger-subtle text-danger badge-status"><i class="bi bi-x-circle-fill me-1"></i>Fail</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#marksModal{{ student.id }}">
-                                <i class="bi bi-pencil-square"></i> Edit Marks
-                            </button>
-                        </td>
-                    </tr>
+                    <td><span class="badge bg-primary-subtle text-primary fw-bold">{{ s.roll_no }}</span></td>
+                    <td class="fw-bold">{{ s.name }}</td>
+                    <td><small class="text-muted">{{ s.course }}</small></td>
+                    <td><span class="fw-semibold">{{ mark.ct1 if mark else 0 }}</span></td>
+                    <td><span class="fw-semibold">{{ mark.ct2 if mark else 0 }}</span></td>
+                    <td><span class="fw-semibold">{{ mark.sem_exam if mark else 0 }}</span></td>
+                    <td><strong class="text-dark">{{ "%.1f"|format(total) }} / 150</strong></td>
+                    <td><strong>{{ pct }}%</strong></td>
+                    <td>
+                        {% if status == 'Pass' %}
+                            <span class="badge bg-success-subtle text-success badge-status"><i class="bi bi-check-circle-fill me-1"></i>Passed</span>
+                        {% elif status == 'Fail' %}
+                            <span class="badge bg-danger-subtle text-danger badge-status"><i class="bi bi-x-circle-fill me-1"></i>Failed</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary badge-status">Not Evaluated</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editMarksModal_{{ s.id }}">
+                            <i class="bi bi-pencil-square"></i> Edit Marks
+                        </button>
 
-                    <!-- Edit Marks Modal -->
-                    <div class="modal fade" id="marksModal{{ student.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content rounded-4 border-0">
-                                <div class="modal-header border-bottom">
-                                    <h5 class="modal-title fw-bold">Update Marks: {{ student.name }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <!-- Edit Marks Modal -->
+                        <div class="modal fade text-start" id="editMarksModal_{{ s.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content rounded-4 border-0 shadow">
+                                    <div class="modal-header border-bottom-0">
+                                        <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus text-primary me-2"></i>Update Marks: {{ s.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="/marks">
+                                        <div class="modal-body">
+                                            <input type="hidden" name="student_id" value="{{ s.id }}">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Class Test 1 (CT-1) Marks (Max 25)</label>
+                                                <input type="number" step="0.5" min="0" max="25" name="ct1" value="{{ mark.ct1 if mark else 0 }}" class="form-control" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Class Test 2 (CT-2) Marks (Max 25)</label>
+                                                <input type="number" step="0.5" min="0" max="25" name="ct2" value="{{ mark.ct2 if mark else 0 }}" class="form-control" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Semester Examination Marks (Max 100)</label>
+                                                <input type="number" step="0.5" min="0" max="100" name="sem_exam" value="{{ mark.sem_exam if mark else 0 }}" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-top-0">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary fw-bold">Save Marks</button>
+                                        </div>
+                                    </form>
                                 </div>
-                                <form method="POST" action="{{ url_for('marks') }}">
-                                    <div class="modal-body">
-                                        <input type="hidden" name="student_id" value="{{ student.id }}">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-semibold">CT-1 Marks (Max 25)</label>
-                                            <input type="number" step="0.5" max="25" min="0" name="ct1" value="{{ m.ct1 if m else 0 }}" class="form-control" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-semibold">CT-2 Marks (Max 25)</label>
-                                            <input type="number" step="0.5" max="25" min="0" name="ct2" value="{{ m.ct2 if m else 0 }}" class="form-control" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-semibold">Semester Exam Marks (Max 100)</label>
-                                            <input type="number" step="0.5" max="100" min="0" name="sem_exam" value="{{ m.sem_exam if m else 0 }}" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-top">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary fw-bold">Save Marks</button>
-                                    </div>
-                                </form>
                             </div>
                         </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="9" class="text-center py-4 text-muted">No students available to manage marks.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">No student records available. Please add students first.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

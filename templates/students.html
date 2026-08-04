@@ -9,7 +9,7 @@
         <p class="text-muted mb-0">View, search, edit, and manage all registered students</p>
     </div>
     <div>
-        <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-rounded px-4 shadow-sm">
+        <a href="/students/add" class="btn btn-primary btn-rounded px-4 shadow-sm">
             <i class="bi bi-person-plus-fill me-1"></i> Add Student
         </a>
     </div>
@@ -17,7 +17,7 @@
 
 <!-- Search Bar -->
 <div class="card border-0 shadow-sm p-3 mb-4 rounded-3 bg-white">
-    <form method="GET" action="{{ url_for('student_list') }}" class="row g-2">
+    <form method="GET" action="/students" class="row g-2">
         <div class="col-md-10">
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
@@ -27,7 +27,7 @@
         <div class="col-md-2 d-flex gap-2">
             <button type="submit" class="btn btn-primary w-100 fw-semibold">Search</button>
             {% if query %}
-                <a href="{{ url_for('student_list') }}" class="btn btn-outline-secondary" title="Clear Search"><i class="bi bi-x-lg"></i></a>
+                <a href="/students" class="btn btn-outline-secondary" title="Clear Search"><i class="bi bi-x-lg"></i></a>
             {% endif %}
         </div>
     </form>
@@ -61,10 +61,10 @@
                     <td><i class="bi bi-envelope text-muted me-1"></i>{{ student.email }}</td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
-                            <a href="{{ url_for('edit_student', id=student.id) }}" class="btn btn-outline-primary" title="Edit Student">
+                            <a href="/students/edit/{{ student.id }}" class="btn btn-outline-primary" title="Edit Student">
                                 <i class="bi bi-pencil-square"></i> Edit
                             </a>
-                            <form method="POST" action="{{ url_for('delete_student', id=student.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete {{ student.name }}?');">
+                            <form method="POST" action="/students/delete/{{ student.id }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete {{ student.name }}?');">
                                 <button type="submit" class="btn btn-outline-danger" title="Delete Student">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
@@ -79,7 +79,7 @@
                         <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
                         <p class="text-muted fw-semibold mb-0">No students found matching your criteria.</p>
                         {% if query %}
-                            <a href="{{ url_for('student_list') }}" class="btn btn-sm btn-outline-primary mt-2">Clear Search Filter</a>
+                            <a href="/students" class="btn btn-sm btn-outline-primary mt-2">Clear Search Filter</a>
                         {% endif %}
                     </td>
                 </tr>
