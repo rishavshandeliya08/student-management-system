@@ -47,59 +47,29 @@ class VercelMiddleware:
 
 app.wsgi_app = VercelMiddleware(app.wsgi_app)
 
-# Always use in-memory SQLite for Vercel serverless to guarantee 100% crash-free execution
+# Use writable /tmp directory for Vercel serverless SQLite database
 if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-else:
     db_path = os.path.join(tempfile.gettempdir(), 'students.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-# Seed sample data helper for instant demonstration
-def seed_sample_data():
-    try:
-        if Student.query.count() == 0:
-            today_str = date.today().strftime('%Y-%m-%d')
-            s1 = Student(roll_no='CS2026001', name='Rahul Sharma', course='B.Tech Computer Science', semester='4', phone='9876543210', email='rahul@college.edu')
-            s2 = Student(roll_no='CS2026002', name='Priya Patel', course='B.Tech Information Technology', semester='4', phone='9876543211', email='priya@college.edu')
-            s3 = Student(roll_no='CS2026003', name='Amit Kumar', course='BCA', semester='2', phone='9876543212', email='amit@college.edu')
-            db.session.add_all([s1, s2, s3])
-            db.session.commit()
-
-            m1 = Marks(student_id=s1.id, ct1=22, ct2=23, sem_exam=85)
-            m2 = Marks(student_id=s2.id, ct1=20, ct2=21, sem_exam=78)
-            m3 = Marks(student_id=s3.id, ct1=15, ct2=14, sem_exam=45)
-            
-            f1 = Fees(student_id=s1.id, total_fee=50000, paid_amount=35000)
-            f2 = Fees(student_id=s2.id, total_fee=50000, paid_amount=50000)
-            f3 = Fees(student_id=s3.id, total_fee=45000, paid_amount=20000)
-
-            a1 = Attendance(student_id=s1.id, date=today_str, status='Present')
-            a2 = Attendance(student_id=s2.id, date=today_str, status='Present')
-            a3 = Attendance(student_id=s3.id, date=today_str, status='Absent')
-
-            db.session.add_all([m1, m2, m3, f1, f2, f3, a1, a2, a3])
-            db.session.commit()
-    except Exception as err:
-        print("Sample data seed note:", err)
-
 # Initialize DB tables cleanly within application context
 with app.app_context():
     try:
         db.create_all()
-        seed_sample_data()
     except Exception as err:
         print("DB table setup note:", err)
 
-# Ensure tables exist and are seeded before handling any request
+# Ensure tables exist before handling any request
 @app.before_request
 def ensure_tables():
     try:
         db.create_all()
-        seed_sample_data()
     except Exception:
         pass
 
@@ -172,7 +142,7 @@ def add_student():
         existing = Student.query.filter_by(roll_no=roll_no).first()
         if existing:
             flash('Student with this Roll Number already exists!', 'danger')
-            return redirect(url_for('add_student'))
+            return redirect('/students/add')
         
         student = Student(roll_no=roll_no, name=name, course=course, semester=semester, phone=phone, email=email)
         db.session.add(student)
@@ -189,7 +159,7 @@ def add_student():
         db.session.commit()
         
         flash('Student added successfully!', 'success')
-        return redirect(url_for('student_list'))
+        return redirect('/students')
         
     return render_template('add_student.html')
 
@@ -206,7 +176,7 @@ def edit_student(id):
         
         db.session.commit()
         flash('Student details updated successfully!', 'success')
-        return redirect(url_for('student_list'))
+        return redirect('/students')
         
     return render_template('edit_student.html', student=student)
 
@@ -216,7 +186,7 @@ def delete_student(id):
     db.session.delete(student)
     db.session.commit()
     flash('Student deleted successfully!', 'success')
-    return redirect(url_for('student_list'))
+    return redirect('/students')
 
 @app.route('/attendance', methods=['GET', 'POST'])
 def attendance():
@@ -235,7 +205,7 @@ def attendance():
                 db.session.add(att)
         db.session.commit()
         flash(f'Attendance recorded for {att_date}!', 'success')
-        return redirect(url_for('attendance', date=att_date))
+        return redirect(f'/attendance?date={att_date}')
     
     selected_date = request.args.get('date', today_str)
     students = Student.query.all()
@@ -281,7 +251,7 @@ def lab_attendance():
                 db.session.add(lab_att)
         db.session.commit()
         flash(f'{subject} attendance recorded for {att_date}!', 'success')
-        return redirect(url_for('lab_attendance', subject=subject, date=att_date))
+        return redirect(f'/lab-attendance?subject={subject}&date={att_date}')
     
     students = Student.query.all()
     records = []
@@ -327,7 +297,7 @@ def marks():
             
         db.session.commit()
         flash('Marks updated successfully!', 'success')
-        return redirect(url_for('marks'))
+        return redirect('/marks')
         
     students = Student.query.all()
     return render_template('marks.html', students=students)
@@ -349,7 +319,7 @@ def fees():
             
         db.session.commit()
         flash('Fee details updated successfully!', 'success')
-        return redirect(url_for('fees'))
+        return redirect('/fees')
         
     students = Student.query.all()
     return render_template('fees.html', students=students)
@@ -358,25 +328,25 @@ def fees():
 @app.route('/student')
 @app.route('/student-list')
 def student_redirect():
-    return redirect(url_for('student_list'))
+    return redirect('/students')
 
 @app.route('/add-student')
 @app.route('/students/new')
 def add_student_redirect():
-    return redirect(url_for('add_student'))
+    return redirect('/students/add')
 
 @app.route('/lab_attendance')
 @app.route('/labattendance')
 def lab_attendance_redirect():
-    return redirect(url_for('lab_attendance'))
+    return redirect('/lab-attendance')
 
 @app.route('/fee')
 def fee_redirect():
-    return redirect(url_for('fees'))
+    return redirect('/fees')
 
 @app.route('/mark')
 def mark_redirect():
-    return redirect(url_for('marks'))
+    return redirect('/marks')
 
 # Custom Error Handlers
 @app.errorhandler(404)
