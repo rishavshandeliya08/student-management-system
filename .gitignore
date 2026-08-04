@@ -7,3 +7,5 @@ venv/
 .venv/
 .idea/
 .vscode/
+
+.vercel

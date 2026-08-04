@@ -25,24 +25,28 @@ class VercelMiddleware:
         self.app = app
 
     def __call__(self, environ, start_response):
-        target_path = ''
-        for key in ['HTTP_X_VERCEL_FORWARDED_PATH', 'HTTP_X_FORWARDED_URI', 'HTTP_X_ORIGINAL_URL', 'HTTP_X_REWRITE_URL', 'REQUEST_URI']:
-            val = environ.get(key, '')
-            if val and not val.startswith('/api/'):
-                target_path = val.split('?')[0]
-                break
+        path = (
+            environ.get('HTTP_X_VERCEL_FORWARDED_PATH') or
+            environ.get('HTTP_X_FORWARDED_URI') or
+            environ.get('HTTP_X_ORIGINAL_URL') or
+            environ.get('RAW_URI') or
+            environ.get('REQUEST_URI') or
+            ''
+        )
+        path = path.split('?')[0]
         
-        if not target_path or target_path == '/.*':
+        if path and not path.startswith('/api/'):
+            environ['PATH_INFO'] = path
+            environ['SCRIPT_NAME'] = ''
+        else:
             path_info = environ.get('PATH_INFO', '')
             if path_info.startswith('/api/index.py'):
-                target_path = path_info[len('/api/index.py'):] or '/'
+                environ['PATH_INFO'] = path_info[len('/api/index.py'):] or '/'
+                environ['SCRIPT_NAME'] = ''
             elif path_info.startswith('/api/index'):
-                target_path = path_info[len('/api/index'):] or '/'
-            else:
-                target_path = path_info or '/'
+                environ['PATH_INFO'] = path_info[len('/api/index'):] or '/'
+                environ['SCRIPT_NAME'] = ''
 
-        environ['PATH_INFO'] = target_path
-        environ['SCRIPT_NAME'] = ''
         return self.app(environ, start_response)
 
 app.wsgi_app = VercelMiddleware(app.wsgi_app)
