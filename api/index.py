@@ -16,6 +16,7 @@ template_dir = os.path.join(parent_dir, 'templates')
 static_dir = os.path.join(parent_dir, 'static')
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+app.url_map.strict_slashes = False
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
 # Use in-memory SQLite for Vercel serverless to guarantee 100% crash-free execution without disk I/O errors
@@ -48,6 +49,9 @@ def ensure_tables():
 LAB_SUBJECTS = ['Python Lab', 'DBMS Lab', 'Operating System Lab', 'Computer Network Lab']
 
 @app.route('/')
+@app.route('/index')
+@app.route('/index.html')
+@app.route('/home')
 @app.route('/dashboard')
 def dashboard():
     try:
@@ -292,3 +296,37 @@ def fees():
         
     students = Student.query.all()
     return render_template('fees.html', students=students)
+
+# Route aliases for common typos or singular paths
+@app.route('/student')
+@app.route('/student-list')
+def student_redirect():
+    return redirect(url_for('student_list'))
+
+@app.route('/add-student')
+@app.route('/students/new')
+def add_student_redirect():
+    return redirect(url_for('add_student'))
+
+@app.route('/lab_attendance')
+@app.route('/labattendance')
+def lab_attendance_redirect():
+    return redirect(url_for('lab_attendance'))
+
+@app.route('/fee')
+def fee_redirect():
+    return redirect(url_for('fees'))
+
+@app.route('/mark')
+def mark_redirect():
+    return redirect(url_for('marks'))
+
+# Custom Error Handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
