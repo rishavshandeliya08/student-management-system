@@ -19,7 +19,21 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.url_map.strict_slashes = False
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
-# Use in-memory SQLite for Vercel serverless to guarantee 100% crash-free execution without disk I/O errors
+# WSGI Middleware to normalize Vercel serverless rewrite paths (/api/index.py -> /)
+class VercelMiddleware:
+    def __init__(self, app):
+        self.app = app
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO', '')
+        if path.startswith('/api/index.py'):
+            environ['PATH_INFO'] = path.replace('/api/index.py', '') or '/'
+        elif path.startswith('/api/index'):
+            environ['PATH_INFO'] = path.replace('/api/index', '') or '/'
+        return self.app(environ, start_response)
+
+app.wsgi_app = VercelMiddleware(app.wsgi_app)
+
+# Always use in-memory SQLite for Vercel serverless to guarantee 100% crash-free execution
 if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 else:
@@ -144,8 +158,7 @@ def edit_student(id):
         student.course = request.form.get('course', '').strip()
         student.semester = request.form.get('semester', '').strip()
         student.phone = request.form.get('phone', '').strip()
-        email_val = request.form.get('email', '').strip()
-        student.email = email_val
+        student.email = request.form.get('email', '').strip()
         
         db.session.commit()
         flash('Student details updated successfully!', 'success')
@@ -329,4 +342,3 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
-
