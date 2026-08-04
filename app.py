@@ -5,7 +5,13 @@ from models import db, Student, Attendance, LabAttendance, Marks, Fees
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
+
+# Use /tmp folder on serverless platforms like Vercel where the root directory is read-only
+if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/students.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
