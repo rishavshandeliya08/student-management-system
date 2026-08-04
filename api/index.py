@@ -19,16 +19,25 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.url_map.strict_slashes = False
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
-# WSGI Middleware to normalize Vercel serverless rewrite paths (/api/index.py -> /)
+# WSGI Middleware to normalize Vercel serverless rewrite paths and script names
 class VercelMiddleware:
     def __init__(self, app):
         self.app = app
     def __call__(self, environ, start_response):
-        path = environ.get('PATH_INFO', '')
-        if path.startswith('/api/index.py'):
-            environ['PATH_INFO'] = path.replace('/api/index.py', '') or '/'
-        elif path.startswith('/api/index'):
-            environ['PATH_INFO'] = path.replace('/api/index', '') or '/'
+        raw_uri = environ.get('HTTP_X_MATCHED_PATH') or environ.get('RAW_URI') or environ.get('REQUEST_URI') or ''
+        if raw_uri and not raw_uri.startswith('/api/index'):
+            environ['PATH_INFO'] = raw_uri.split('?')[0]
+            environ['SCRIPT_NAME'] = ''
+        else:
+            path = environ.get('PATH_INFO', '')
+            if path.startswith('/api/index.py'):
+                suffix = path.replace('/api/index.py', '')
+                environ['PATH_INFO'] = suffix if suffix else '/'
+                environ['SCRIPT_NAME'] = ''
+            elif path.startswith('/api/index'):
+                suffix = path.replace('/api/index', '')
+                environ['PATH_INFO'] = suffix if suffix else '/'
+                environ['SCRIPT_NAME'] = ''
         return self.app(environ, start_response)
 
 app.wsgi_app = VercelMiddleware(app.wsgi_app)
