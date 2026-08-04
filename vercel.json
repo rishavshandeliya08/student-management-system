@@ -1,4 +1,5 @@
 {
+  "name": "student-management-rishab",
   "rewrites": [
     {
       "source": "/(.*)",
