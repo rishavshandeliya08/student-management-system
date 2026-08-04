@@ -1,4 +1,5 @@
 import os
+import tempfile
 from datetime import date
 from flask import Flask, render_template, request, redirect, url_for, flash
 from models import db, Student, Attendance, LabAttendance, Marks, Fees
@@ -6,9 +7,10 @@ from models import db, Student, Attendance, LabAttendance, Marks, Fees
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
-# Use /tmp folder on serverless platforms like Vercel where the root directory is read-only
-if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/students.db'
+# Use writable temporary directory on Vercel serverless environment
+if os.environ.get('VERCEL'):
+    db_path = os.path.join(tempfile.gettempdir(), 'students.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
 
