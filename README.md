@@ -1,6 +1,12 @@
 # Student Management System (Python Flask)
 
-A beginner-friendly, clean, and responsive **Student Management System** built with **Python Flask**, **SQLite**, **SQLAlchemy**, **Bootstrap 5**, and **Jinja2**. Designed for college mini-projects and easy free deployment to cloud platforms like Render.com.
+A beginner-friendly, clean, and responsive **Student Management System** built with **Python Flask**, **SQLite**, **SQLAlchemy**, **Bootstrap 5**, and **Jinja2**. Designed for college mini-projects and easy serverless cloud deployment on Vercel.
+
+---
+
+## 🌐 Live Public Application URL
+
+👉 **[https://student-management-system-rishav.vercel.app](https://student-management-system-rishav.vercel.app)**
 
 ---
 
@@ -47,11 +53,12 @@ A beginner-friendly, clean, and responsive **Student Management System** built w
 ```
 student-management/
 │
-├── app.py              # Main Flask application & routes
+├── api/                # Vercel serverless entrypoint
+│   └── index.py        # Crash-proof Vercel Flask handler
+├── app.py              # Main Flask entrypoint for local testing
 ├── models.py           # SQLAlchemy database models
 ├── requirements.txt    # Python dependencies
-├── Procfile            # Deployment process file for Render/Heroku
-├── runtime.txt         # Python runtime environment
+├── vercel.json         # Vercel route rewrites & serverless build config
 ├── README.md           # Documentation & deployment guide
 ├── .gitignore          # Version control exclusions
 │
@@ -94,53 +101,16 @@ student-management/
 
 ---
 
-## ☁️ Step-by-Step Free Public Cloud Deployment Guide
-
-### Option 1: Deploy on Render.com (Recommended - Public URL)
+## ☁️ Deploying on Vercel
 
 1. **Push to GitHub**:
-   - Create a new public repository on GitHub (e.g. `student-management-system`).
-   - Push all project files to your GitHub repository:
-     ```bash
-     git init
-     git add .
-     git commit -m "Initial commit of Student Management System"
-     git branch -M main
-     git remote add origin https://github.com/YOUR_USERNAME/student-management-system.git
-     git push -u origin main
-     ```
+   Push your project repository to GitHub.
 
-2. **Create Web Service on Render**:
-   - Sign up / Log in to [Render.com](https://render.com/).
-   - Click **New +** -> **Web Service**.
-   - Select **Build and deploy from a Git repository** and connect your GitHub account.
-   - Choose your `student-management-system` repository.
+2. **Import to Vercel**:
+   - Go to [Vercel.com](https://vercel.com).
+   - Click **Add New Site** -> **Import Git Repository**.
+   - Set the project name to `student-management-system-rishav`.
+   - Click **Deploy**.
 
-3. **Configure Settings**:
-   - **Name**: `student-management-portal` (or your preferred unique name)
-   - **Region**: Choose the closest location to you
-   - **Branch**: `main`
-   - **Runtime**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
-   - **Instance Type**: Select **Free** tier
-
-4. **Deploy**:
-   - Click **Create Web Service**.
-   - Render will build and deploy your project automatically.
-   - Once deployed, your project will be live with a public URL such as:
-     `https://student-management-portal.onrender.com`
-
----
-
-### Option 2: Deploy on PythonAnywhere
-
-1. Sign up for a free account at [PythonAnywhere.com](https://www.pythonanywhere.com/).
-2. Open a **Bash Console** and clone your project from GitHub.
-3. Create a virtual environment and install requirements:
-   ```bash
-   mkvirtualenv --python=/usr/bin/python3.10 myenv
-   pip install -r requirements.txt
-   ```
-4. Go to the **Web** tab, create a new Web App selecting **Flask**, set the WSGI configuration file path pointing to `app.py`.
-5. Reload the web app and open your assigned URL (`https://yourusername.pythonanywhere.com`).
+Your live URL will be:
+👉 **`https://student-management-system-rishav.vercel.app`**
