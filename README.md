@@ -6,7 +6,7 @@ A beginner-friendly, clean, and responsive **Student Management System** built w
 
 ## 🌐 Live Public Application URL
 
-👉 **[https://student-management-system-rishav.vercel.app](https://student-management-system-rishav.vercel.app)**
+👉 **[https://student-management-system-rishab.vercel.app](https://student-management-system-rishab.vercel.app)**
 
 ---
 
@@ -109,8 +109,8 @@ student-management/
 2. **Import to Vercel**:
    - Go to [Vercel.com](https://vercel.com).
    - Click **Add New Site** -> **Import Git Repository**.
-   - Set the project name to `student-management-system-rishav`.
+   - Set the project name to `student-management-system-rishab`.
    - Click **Deploy**.
 
 Your live URL will be:
-👉 **`https://student-management-system-rishav.vercel.app`**
+👉 **`https://student-management-system-rishab.vercel.app`**
