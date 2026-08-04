@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Student - Student Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+                <h4 class="fw-bold mb-0"><i class="bi bi-pencil-square text-primary me-2"></i>Edit Student Details</h4>
+                <a href="{{ url_for('student_list') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to List
+                </a>
+            </div>
+
+            <form method="POST" action="{{ url_for('edit_student', id=student.id) }}">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Roll Number <span class="text-danger">*</span></label>
+                        <input type="text" name="roll_no" value="{{ student.roll_no }}" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" value="{{ student.name }}" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Course <span class="text-danger">*</span></label>
+                        <select name="course" class="form-select" required>
+                            <option value="B.Tech Computer Science" {% if student.course == 'B.Tech Computer Science' %}selected{% endif %}>B.Tech Computer Science</option>
+                            <option value="B.Tech Information Technology" {% if student.course == 'B.Tech Information Technology' %}selected{% endif %}>B.Tech Information Technology</option>
+                            <option value="BCA" {% if student.course == 'BCA' %}selected{% endif %}>BCA</option>
+                            <option value="MCA" {% if student.course == 'MCA' %}selected{% endif %}>MCA</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+                        <select name="semester" class="form-select" required>
+                            {% for sem in range(1, 9) %}
+                                <option value="{{ sem }}" {% if student.semester|string == sem|string %}selected{% endif %}>Semester {{ sem }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" name="phone" value="{{ student.phone }}" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" name="email" value="{{ student.email }}" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('student_list') }}" class="btn btn-light px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Update Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

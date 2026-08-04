@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Student Management System{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col">
+        <h3 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>College Overview Dashboard</h3>
+        <p class="text-muted mb-0">Summary of student metrics and daily attendance for {{ today_date }}</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-rounded px-4 shadow-sm">
+            <i class="bi bi-person-plus-fill me-1"></i> Add New Student
+        </a>
+    </div>
+</div>
+
+<!-- Metric Cards Grid -->
+<div class="row g-4 mb-5">
+    <!-- Total Students Card -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted fw-semibold small d-block mb-1">Total Students</span>
+                    <h2 class="fw-bold mb-0 text-dark">{{ total_students }}</h2>
+                </div>
+                <div class="icon-shape bg-gradient-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Present Today Card -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted fw-semibold small d-block mb-1">Present Today</span>
+                    <h2 class="fw-bold mb-0 text-success">{{ present_today }}</h2>
+                </div>
+                <div class="icon-shape bg-gradient-success">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Absent Today Card -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted fw-semibold small d-block mb-1">Absent Today</span>
+                    <h2 class="fw-bold mb-0 text-danger">{{ absent_today }}</h2>
+                </div>
+                <div class="icon-shape bg-gradient-danger">
+                    <i class="bi bi-person-x-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fees Pending Card -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted fw-semibold small d-block mb-1">Fees Pending</span>
+                    <h2 class="fw-bold mb-0 text-warning">₹{{ "%.0f"|format(fees_pending) }}</h2>
+                </div>
+                <div class="icon-shape bg-gradient-warning">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Passed Card -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted fw-semibold small d-block mb-1">Passed (>=40%)</span>
+                    <h2 class="fw-bold mb-0 text-info">{{ students_passed }}</h2>
+                </div>
+                <div class="icon-shape bg-gradient-info">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Failed Card -->
+    <div class="col-md-4 col-lg-2">
+        <div class="card metric-card h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted fw-semibold small d-block mb-1">Failed (<40%)</span>
+                    <h2 class="fw-bold mb-0 text-secondary">{{ students_failed }}</h2>
+                </div>
+                <div class="icon-shape bg-gradient-dark">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Navigation Banner -->
+<div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-grid-fill text-primary me-2"></i>Quick Management Modules</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <a href="{{ url_for('student_list') }}" class="btn btn-outline-primary w-100 py-3 rounded-3 text-start">
+                <i class="bi bi-person-lines-fill fs-4 d-block mb-1"></i>
+                <strong class="d-block">Student Directory</strong>
+                <small class="text-muted">Search, edit, or remove students</small>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('attendance') }}" class="btn btn-outline-success w-100 py-3 rounded-3 text-start">
+                <i class="bi bi-calendar-check-fill fs-4 d-block mb-1"></i>
+                <strong class="d-block">Daily Attendance</strong>
+                <small class="text-muted">Record & view percentage stats</small>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('lab_attendance') }}" class="btn btn-outline-info w-100 py-3 rounded-3 text-start">
+                <i class="bi bi-cpu-fill fs-4 d-block mb-1"></i>
+                <strong class="d-block">Lab Attendance</strong>
+                <small class="text-muted">Python, DBMS, OS, & CN Labs</small>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('marks') }}" class="btn btn-outline-warning w-100 py-3 rounded-3 text-start">
+                <i class="bi bi-award-fill fs-4 d-block mb-1"></i>
+                <strong class="d-block">Marks & Grades</strong>
+                <small class="text-muted">CT-1, CT-2, & Sem exams</small>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
