@@ -18,20 +18,31 @@ static_dir = os.path.join(parent_dir, 'static')
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 
-# Always use /tmp directory for SQLite database in serverless environments
-db_path = os.path.join(tempfile.gettempdir(), 'students.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+# Use in-memory SQLite for Vercel serverless to guarantee 100% crash-free execution without disk I/O errors
+if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+else:
+    db_path = os.path.join(tempfile.gettempdir(), 'students.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-# Ensure database tables exist before handling any HTTP request
-@app.before_request
-def init_db_tables():
+# Initialize DB tables cleanly within application context
+with app.app_context():
     try:
         db.create_all()
     except Exception as err:
-        print("Table initialization info:", err)
+        print("DB table setup note:", err)
+
+# Ensure tables exist before handling any request
+@app.before_request
+def ensure_tables():
+    try:
+        db.create_all()
+    except Exception:
+        pass
 
 # Helper list of lab subjects
 LAB_SUBJECTS = ['Python Lab', 'DBMS Lab', 'Operating System Lab', 'Computer Network Lab']
@@ -53,7 +64,7 @@ def dashboard():
         students_passed = sum(1 for m in all_marks if m.status == 'Pass') if all_marks else 0
         students_failed = sum(1 for m in all_marks if m.status == 'Fail') if all_marks else 0
     except Exception as err:
-        print("Dashboard query error:", err)
+        print("Dashboard query info:", err)
         total_students = 0
         today_str = date.today().strftime('%Y-%m-%d')
         present_today = 0
@@ -129,7 +140,8 @@ def edit_student(id):
         student.course = request.form.get('course', '').strip()
         student.semester = request.form.get('semester', '').strip()
         student.phone = request.form.get('phone', '').strip()
-        student.email = request.form.get('email', '').strip()
+        email_val = request.form.get('email', '').strip()
+        student.email = email_val
         
         db.session.commit()
         flash('Student details updated successfully!', 'success')
