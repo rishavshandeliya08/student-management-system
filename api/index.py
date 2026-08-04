@@ -23,21 +23,26 @@ app.config['SECRET_KEY'] = 'student_management_secret_key_123'
 class VercelMiddleware:
     def __init__(self, app):
         self.app = app
+
     def __call__(self, environ, start_response):
-        raw_uri = environ.get('HTTP_X_MATCHED_PATH') or environ.get('RAW_URI') or environ.get('REQUEST_URI') or ''
-        if raw_uri and not raw_uri.startswith('/api/index'):
-            environ['PATH_INFO'] = raw_uri.split('?')[0]
-            environ['SCRIPT_NAME'] = ''
-        else:
-            path = environ.get('PATH_INFO', '')
-            if path.startswith('/api/index.py'):
-                suffix = path.replace('/api/index.py', '')
-                environ['PATH_INFO'] = suffix if suffix else '/'
-                environ['SCRIPT_NAME'] = ''
-            elif path.startswith('/api/index'):
-                suffix = path.replace('/api/index', '')
-                environ['PATH_INFO'] = suffix if suffix else '/'
-                environ['SCRIPT_NAME'] = ''
+        target_path = ''
+        for key in ['HTTP_X_VERCEL_FORWARDED_PATH', 'HTTP_X_FORWARDED_URI', 'HTTP_X_ORIGINAL_URL', 'HTTP_X_REWRITE_URL', 'REQUEST_URI']:
+            val = environ.get(key, '')
+            if val and not val.startswith('/api/'):
+                target_path = val.split('?')[0]
+                break
+        
+        if not target_path or target_path == '/.*':
+            path_info = environ.get('PATH_INFO', '')
+            if path_info.startswith('/api/index.py'):
+                target_path = path_info[len('/api/index.py'):] or '/'
+            elif path_info.startswith('/api/index'):
+                target_path = path_info[len('/api/index'):] or '/'
+            else:
+                target_path = path_info or '/'
+
+        environ['PATH_INFO'] = target_path
+        environ['SCRIPT_NAME'] = ''
         return self.app(environ, start_response)
 
 app.wsgi_app = VercelMiddleware(app.wsgi_app)
@@ -53,18 +58,48 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+# Seed sample data helper for instant demonstration
+def seed_sample_data():
+    try:
+        if Student.query.count() == 0:
+            today_str = date.today().strftime('%Y-%m-%d')
+            s1 = Student(roll_no='CS2026001', name='Rahul Sharma', course='B.Tech Computer Science', semester='4', phone='9876543210', email='rahul@college.edu')
+            s2 = Student(roll_no='CS2026002', name='Priya Patel', course='B.Tech Information Technology', semester='4', phone='9876543211', email='priya@college.edu')
+            s3 = Student(roll_no='CS2026003', name='Amit Kumar', course='BCA', semester='2', phone='9876543212', email='amit@college.edu')
+            db.session.add_all([s1, s2, s3])
+            db.session.commit()
+
+            m1 = Marks(student_id=s1.id, ct1=22, ct2=23, sem_exam=85)
+            m2 = Marks(student_id=s2.id, ct1=20, ct2=21, sem_exam=78)
+            m3 = Marks(student_id=s3.id, ct1=15, ct2=14, sem_exam=45)
+            
+            f1 = Fees(student_id=s1.id, total_fee=50000, paid_amount=35000)
+            f2 = Fees(student_id=s2.id, total_fee=50000, paid_amount=50000)
+            f3 = Fees(student_id=s3.id, total_fee=45000, paid_amount=20000)
+
+            a1 = Attendance(student_id=s1.id, date=today_str, status='Present')
+            a2 = Attendance(student_id=s2.id, date=today_str, status='Present')
+            a3 = Attendance(student_id=s3.id, date=today_str, status='Absent')
+
+            db.session.add_all([m1, m2, m3, f1, f2, f3, a1, a2, a3])
+            db.session.commit()
+    except Exception as err:
+        print("Sample data seed note:", err)
+
 # Initialize DB tables cleanly within application context
 with app.app_context():
     try:
         db.create_all()
+        seed_sample_data()
     except Exception as err:
         print("DB table setup note:", err)
 
-# Ensure tables exist before handling any request
+# Ensure tables exist and are seeded before handling any request
 @app.before_request
 def ensure_tables():
     try:
         db.create_all()
+        seed_sample_data()
     except Exception:
         pass
 
